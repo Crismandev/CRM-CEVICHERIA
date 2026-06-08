@@ -2,14 +2,15 @@
 -- MIGRACIÓN DE SEGURIDAD, AMPLIACIÓN DE ESQUEMA Y MESAS EN TIEMPO REAL
 -- =========================================================================
 
--- Asegurar propiedad de las tablas para evitar el error 42501 (must be owner)
-ALTER TABLE IF EXISTS public.productos OWNER TO postgres;
-ALTER TABLE IF EXISTS public.ordenes OWNER TO postgres;
-ALTER TABLE IF EXISTS public.orden_detalles OWNER TO postgres;
+-- NOTA: Las modificaciones sobre 'productos', 'ordenes' y 'orden_detalles' ya
+-- fueron ejecutadas en pasos anteriores. Se omiten para evitar errores de propiedad (42501).
+-- ALTER TABLE IF EXISTS public.productos OWNER TO postgres;
+-- ALTER TABLE IF EXISTS public.ordenes OWNER TO postgres;
+-- ALTER TABLE IF EXISTS public.orden_detalles OWNER TO postgres;
 
 -- 1. Ampliar la tabla de órdenes para almacenar la mesa y el mesero
-ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS mesa TEXT;
-ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS creado_por TEXT;
+-- ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS mesa TEXT;
+-- ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS creado_por TEXT;
 
 -- 2. Crear la tabla de gestión de mesas
 CREATE TABLE IF NOT EXISTS mesas (
@@ -21,76 +22,74 @@ CREATE TABLE IF NOT EXISTS mesas (
 );
 
 -- 3. Asegurar que RLS esté habilitado en todas las tablas
-ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ordenes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orden_detalles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE ordenes ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE orden_detalles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mesas ENABLE ROW LEVEL SECURITY;
 
 -- 4. Eliminar políticas anónimas permisivas anteriores
-DROP POLICY IF EXISTS "Permitir todo a anonimos en productos" ON productos;
-DROP POLICY IF EXISTS "Permitir todo a anonimos en ordenes" ON ordenes;
-DROP POLICY IF EXISTS "Permitir todo a anonimos en orden_detalles" ON orden_detalles;
+-- DROP POLICY IF EXISTS "Permitir todo a anonimos en productos" ON productos;
+-- DROP POLICY IF EXISTS "Permitir todo a anonimos en ordenes" ON ordenes;
+-- DROP POLICY IF EXISTS "Permitir todo a anonimos en orden_detalles" ON orden_detalles;
 DROP POLICY IF EXISTS "Permitir todo a anonimos en mesas" ON mesas;
 
 -- 5. Eliminar políticas nuevas previas para permitir re-ejecución sin errores (idempotencia)
-DROP POLICY IF EXISTS "Permitir lectura de productos a autenticados" ON productos;
-DROP POLICY IF EXISTS "Permitir gestion de productos solo a administradores" ON productos;
-DROP POLICY IF EXISTS "Permitir lectura de ordenes a autenticados" ON ordenes;
-DROP POLICY IF EXISTS "Permitir creacion de ordenes a autenticados" ON ordenes;
-DROP POLICY IF EXISTS "Permitir anular/modificar ordenes solo a administradores" ON ordenes;
-DROP POLICY IF EXISTS "Permitir lectura de detalles a autenticados" ON orden_detalles;
-DROP POLICY IF EXISTS "Permitir creacion de detalles a autenticados" ON orden_detalles;
+-- DROP POLICY IF EXISTS "Permitir lectura de productos a autenticados" ON productos;
+-- DROP POLICY IF EXISTS "Permitir gestion de productos solo a administradores" ON productos;
+-- DROP POLICY IF EXISTS "Permitir lectura de ordenes a autenticados" ON ordenes;
+-- DROP POLICY IF EXISTS "Permitir creacion de ordenes a autenticados" ON ordenes;
+-- DROP POLICY IF EXISTS "Permitir anular/modificar ordenes solo a administradores" ON ordenes;
+-- DROP POLICY IF EXISTS "Permitir lectura de detalles a autenticados" ON orden_detalles;
+-- DROP POLICY IF EXISTS "Permitir creacion de detalles a autenticados" ON orden_detalles;
 DROP POLICY IF EXISTS "Permitir lectura de mesas a autenticados" ON mesas;
 DROP POLICY IF EXISTS "Permitir actualizacion de mesas a autenticados" ON mesas;
 
 -- 6. Establecer políticas RLS basadas en autenticación y roles
 
 -- === TABLA: PRODUCTOS ===
--- Lectura para todos los usuarios autenticados
-CREATE POLICY "Permitir lectura de productos a autenticados" 
-ON productos FOR SELECT 
-TO authenticated 
-USING (true);
+-- (Ya configurada previamente)
+-- CREATE POLICY "Permitir lectura de productos a autenticados" 
+-- ON productos FOR SELECT 
+-- TO authenticated 
+-- USING (true);
 
--- Escritura solo para el administrador
-CREATE POLICY "Permitir gestion de productos solo a administradores" 
-ON productos FOR ALL 
-TO authenticated 
-USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
+-- CREATE POLICY "Permitir gestion de productos solo a administradores" 
+-- ON productos FOR ALL 
+-- TO authenticated 
+-- USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
+-- WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
 
 
 -- === TABLA: ORDENES ===
--- Lectura y creación para todos los usuarios autenticados
-CREATE POLICY "Permitir lectura de ordenes a autenticados" 
-ON ordenes FOR SELECT 
-TO authenticated 
-USING (true);
+-- (Ya configurada previamente)
+-- CREATE POLICY "Permitir lectura de ordenes a autenticados" 
+-- ON ordenes FOR SELECT 
+-- TO authenticated 
+-- USING (true);
 
-CREATE POLICY "Permitir creacion de ordenes a autenticados" 
-ON ordenes FOR INSERT 
-TO authenticated 
-WITH CHECK (true);
+-- CREATE POLICY "Permitir creacion de ordenes a autenticados" 
+-- ON ordenes FOR INSERT 
+-- TO authenticated 
+-- WITH CHECK (true);
 
--- Modificación (anulación) solo para administradores
-CREATE POLICY "Permitir anular/modificar ordenes solo a administradores" 
-ON ordenes FOR UPDATE 
-TO authenticated 
-USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
+-- CREATE POLICY "Permitir anular/modificar ordenes solo a administradores" 
+-- ON ordenes FOR UPDATE 
+-- TO authenticated 
+-- USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
+-- WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
 
 
 -- === TABLA: ORDEN_DETALLES ===
--- Lectura e inserción para todos los usuarios autenticados
-CREATE POLICY "Permitir lectura de detalles a autenticados" 
-ON orden_detalles FOR SELECT 
-TO authenticated 
-USING (true);
+-- (Ya configurada previamente)
+-- CREATE POLICY "Permitir lectura de detalles a autenticados" 
+-- ON orden_detalles FOR SELECT 
+-- TO authenticated 
+-- USING (true);
 
-CREATE POLICY "Permitir creacion de detalles a autenticados" 
-ON orden_detalles FOR INSERT 
-TO authenticated 
-WITH CHECK (true);
+-- CREATE POLICY "Permitir creacion de detalles a autenticados" 
+-- ON orden_detalles FOR INSERT 
+-- TO authenticated 
+-- WITH CHECK (true);
 
 
 -- === TABLA: MESAS ===
