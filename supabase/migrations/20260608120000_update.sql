@@ -259,7 +259,7 @@ BEGIN
         created_at, 
         updated_at
     ) VALUES ( 
-        new_user_id::text, 
+        new_user_id, 
         new_user_id, 
         jsonb_build_object('sub', new_user_id::text, 'email', email_val), 
         'email', 
@@ -357,7 +357,7 @@ INSERT INTO auth.identities (
     updated_at
 )
 SELECT 
-    id::text, 
+    id, 
     id, 
     jsonb_build_object('sub', id::text, 'email', email), 
     'email', 
