@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useToast } from '../hooks/useToast';
-import { ChefHat, ShoppingBag, Package, LogOut, Anchor, History } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { ChefHat, ShoppingBag, Package, LogOut, Anchor, History, ShieldAlert } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -9,12 +10,24 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { showToast } = useToast();
+  const { user, role, logout } = useAuth();
   const location = useLocation();
+
+  const handleLogoutClick = async () => {
+    try {
+      await logout();
+      showToast('Sesión cerrada correctamente.', 'info');
+    } catch (err) {
+      showToast('Error al cerrar sesión.', 'error');
+    }
+  };
 
   const navigation = [
     { name: 'Punto de Venta', href: '/', icon: ShoppingBag },
     { name: 'Historial / Ventas', href: '/ordenes', icon: History },
-    { name: 'Inventario / Platos', href: '/inventario', icon: Package },
+    ...(role === 'admin'
+      ? [{ name: 'Inventario / Platos', href: '/inventario', icon: Package }]
+      : []),
   ];
 
   return (
@@ -56,18 +69,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User profile footer */}
-        <div className="p-4 border-t border-slate-800 text-xs text-slate-500 flex justify-between items-center bg-slate-950/20">
-          <div className="flex items-center gap-2">
-            <ChefHat className="h-4 w-4 text-emerald-500" />
-            <span className="font-semibold text-slate-400">Cajero Principal</span>
+        <div className="p-4 border-t border-slate-800 text-xs text-slate-500 flex flex-col gap-2 bg-slate-950/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 overflow-hidden">
+              {role === 'admin' ? (
+                <ShieldAlert className="h-4.5 w-4.5 text-amber-500 flex-shrink-0" />
+              ) : (
+                <ChefHat className="h-4.5 w-4.5 text-emerald-500 flex-shrink-0" />
+              )}
+              <div className="flex flex-col overflow-hidden">
+                <span className="font-bold text-slate-300 truncate text-[11px]" title={user?.email || ''}>
+                  {user?.email || 'Usuario'}
+                </span>
+                <span className={`text-[9px] font-black uppercase tracking-wider ${role === 'admin' ? 'text-amber-500' : 'text-sky-400'}`}>
+                  {role === 'admin' ? 'Administrador' : 'Mesero'}
+                </span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleLogoutClick}
+              className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800/55 transition-colors cursor-pointer flex-shrink-0"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
-          <button 
-            onClick={() => showToast('Cierre de caja registrado.', 'info')}
-            className="text-slate-500 hover:text-red-400 p-1 rounded-md hover:bg-slate-800/55 transition-colors cursor-pointer"
-            title="Cerrar turno"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-          </button>
         </div>
       </aside>
 
@@ -77,7 +104,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0">
           <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">
-            {location.pathname === '/' ? 'Terminal POS / Caja' : 'Administración / Menú e Inventario'}
+            {location.pathname === '/' ? 'Terminal POS / Ventas' : location.pathname === '/ordenes' ? 'Historial de Comprobantes' : 'Administración / Menú e Inventario'}
           </h2>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wider">

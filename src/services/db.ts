@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Producto, Orden, OrdenDetalle, TipoComprobante } from '../types/database';
+import type { Producto, Orden, OrdenDetalle, TipoComprobante, Mesa } from '../types/database';
 
 export const db = {
   // Productos
@@ -61,7 +61,9 @@ export const db = {
     total: number,
     tipoComprobante: TipoComprobante,
     documentoCliente: string | null,
-    items: { productoId: string; cantidad: number; precioUnitario: number }[]
+    items: { productoId: string; cantidad: number; precioUnitario: number }[],
+    mesa: string | null = null,
+    creadoPor: string | null = null
   ): Promise<Orden> {
     // 1. Insertar la orden
     const { data: ordenData, error: ordenError } = await supabase
@@ -72,6 +74,8 @@ export const db = {
           tipo_comprobante: tipoComprobante,
           documento_cliente: documentoCliente || null,
           estado: 'pagado',
+          mesa,
+          creado_por: creadoPor,
         },
       ])
       .select()
@@ -129,5 +133,38 @@ export const db = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  // Mesas
+  async getMesas(): Promise<Mesa[]> {
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async updateMesaEstado(id: number, estado: 'libre' | 'ocupada', atendidoPor: string | null): Promise<void> {
+    const { error } = await supabase
+      .from('mesas')
+      .update({ estado, atendido_por: atendidoPor })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  subscribeToMesas(callback: (payload: any) => void) {
+    return supabase
+      .channel('mesas-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'mesas' },
+        (payload) => {
+          callback(payload);
+        }
+      )
+      .subscribe();
   }
 };

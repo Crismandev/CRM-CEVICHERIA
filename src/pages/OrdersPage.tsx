@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { db } from '../services/db';
+import { useAuth } from '../hooks/useAuth';
 import type { Orden, OrdenDetalle } from '../types/database';
 import { PrintReceipt } from '../components/pos/PrintReceipt';
 import { useToast } from '../hooks/useToast';
@@ -10,6 +11,7 @@ import {
 
 export const OrdersPage: React.FC = () => {
   const { showToast } = useToast();
+  const { role } = useAuth();
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -349,6 +351,18 @@ export const OrdersPage: React.FC = () => {
                         <span className="text-slate-400 font-semibold uppercase text-3xs">Tipo:</span>
                         <span className="font-extrabold uppercase text-slate-700">{selectedOrden.tipo_comprobante}</span>
                       </p>
+                      {selectedOrden.mesa && (
+                        <p className="flex justify-between">
+                          <span className="text-slate-400 font-semibold uppercase text-3xs">Mesa:</span>
+                          <span className="font-bold text-slate-700">{selectedOrden.mesa}</span>
+                        </p>
+                      )}
+                      {selectedOrden.creado_por && (
+                        <p className="flex justify-between text-[11px] overflow-hidden">
+                          <span className="text-slate-400 font-semibold uppercase text-3xs flex-shrink-0">Atendido por:</span>
+                          <span className="font-bold text-slate-700 truncate">{selectedOrden.creado_por}</span>
+                        </p>
+                      )}
                       {selectedOrden.documento_cliente && (
                         <p className="flex justify-between">
                           <span className="text-slate-400 font-semibold uppercase text-3xs">Doc. Cliente:</span>
@@ -411,7 +425,7 @@ export const OrdersPage: React.FC = () => {
                   Reimprimir Ticket (80mm)
                 </button>
 
-                {selectedOrden.estado === 'pagado' && (
+                {role === 'admin' && selectedOrden.estado === 'pagado' && (
                   <button
                     onClick={() => handleAnnulOrder(selectedOrden.id)}
                     disabled={loadingDetalles}

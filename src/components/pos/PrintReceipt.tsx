@@ -37,7 +37,14 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ printData }) => {
       {/* metadata */}
       <div className="space-y-1 mb-3 border-b border-dashed border-black pb-3">
         <p><strong>Fecha:</strong> {fecha}</p>
-        <p><strong>Cajero:</strong> Cajero Central</p>
+        {orden.creado_por ? (
+          <p><strong>Atendido por:</strong> {orden.creado_por}</p>
+        ) : (
+          <p><strong>Atendido por:</strong> Cajero Central</p>
+        )}
+        {orden.mesa && (
+          <p><strong>Ubicación:</strong> {orden.mesa}</p>
+        )}
         {orden.documento_cliente && (
           <p>
             <strong>{orden.tipo_comprobante === 'factura' ? 'RUC:' : 'DNI/RUC:'}</strong>{' '}

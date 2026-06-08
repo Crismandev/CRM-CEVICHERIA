@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { Producto, CartItem } from '../types/database';
 
 interface CartContextType {
@@ -9,66 +9,135 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   totalItems: number;
+  activeTable: string | null;
+  setActiveTable: (table: string | null) => void;
+  getTableCart: (table: string) => CartItem[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Estado de carritos indexados por mesa (ej: { 'Mesa 1': [...], 'Mesa 2': [...] })
+  const [carts, setCarts] = useState<{ [table: string]: CartItem[] }>(() => {
+    try {
+      const saved = localStorage.getItem('el_puerto_carts');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Mesa activa seleccionada en el POS
+  const [activeTable, setActiveTable] = useState<string | null>(null);
+
+  // Guardar en localStorage ante cambios
+  useEffect(() => {
+    localStorage.setItem('el_puerto_carts', JSON.stringify(carts));
+  }, [carts]);
+
+  // Obtener el carrito de la mesa activa
+  const cart = useMemo(() => {
+    if (!activeTable) return [];
+    return carts[activeTable] || [];
+  }, [carts, activeTable]);
+
+  const getTableCart = useCallback((table: string) => {
+    return carts[table] || [];
+  }, [carts]);
 
   const addToCart = useCallback((producto: Producto) => {
-    setCart((prevCart) => {
+    if (!activeTable) return;
+    
+    setCarts((prevCarts) => {
+      const prevCart = prevCarts[activeTable] || [];
       const existingItemIndex = prevCart.findIndex((item) => item.producto.id === producto.id);
+      let newCart = [...prevCart];
 
       if (existingItemIndex > -1) {
         const existingItem = prevCart[existingItemIndex];
         // Validar stock disponible
         if (existingItem.cantidad >= producto.stock_disponible) {
           alert(`No hay suficiente stock disponible para ${producto.nombre} (Stock: ${producto.stock_disponible})`);
-          return prevCart;
+          return prevCarts;
         }
-        const newCart = [...prevCart];
         newCart[existingItemIndex] = {
           ...existingItem,
           cantidad: existingItem.cantidad + 1,
         };
-        return newCart;
       } else {
         if (producto.stock_disponible < 1) {
           alert(`No hay stock disponible para ${producto.nombre}`);
-          return prevCart;
+          return prevCarts;
         }
-        return [...prevCart, { producto, cantidad: 1 }];
+        newCart = [...prevCart, { producto, cantidad: 1 }];
       }
+
+      return {
+        ...prevCarts,
+        [activeTable]: newCart,
+      };
     });
-  }, []);
+  }, [activeTable]);
 
   const removeFromCart = useCallback((productoId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.producto.id !== productoId));
-  }, []);
+    if (!activeTable) return;
+    
+    setCarts((prevCarts) => {
+      const prevCart = prevCarts[activeTable] || [];
+      const newCart = prevCart.filter((item) => item.producto.id !== productoId);
+      
+      const copy = { ...prevCarts };
+      if (newCart.length === 0) {
+        delete copy[activeTable];
+        return copy;
+      }
+      return {
+        ...copy,
+        [activeTable]: newCart,
+      };
+    });
+  }, [activeTable]);
 
   const decrementQuantity = useCallback((productoId: string) => {
-    setCart((prevCart) => {
+    if (!activeTable) return;
+
+    setCarts((prevCarts) => {
+      const prevCart = prevCarts[activeTable] || [];
       const existingItemIndex = prevCart.findIndex((item) => item.producto.id === productoId);
-      if (existingItemIndex === -1) return prevCart;
+      if (existingItemIndex === -1) return prevCarts;
 
       const existingItem = prevCart[existingItemIndex];
+      let newCart = [...prevCart];
+
       if (existingItem.cantidad <= 1) {
-        return prevCart.filter((item) => item.producto.id !== productoId);
+        newCart = prevCart.filter((item) => item.producto.id !== productoId);
+      } else {
+        newCart[existingItemIndex] = {
+          ...existingItem,
+          cantidad: existingItem.cantidad - 1,
+        };
       }
 
-      const newCart = [...prevCart];
-      newCart[existingItemIndex] = {
-        ...existingItem,
-        cantidad: existingItem.cantidad - 1,
+      const copy = { ...prevCarts };
+      if (newCart.length === 0) {
+        delete copy[activeTable];
+        return copy;
+      }
+      return {
+        ...copy,
+        [activeTable]: newCart,
       };
-      return newCart;
     });
-  }, []);
+  }, [activeTable]);
 
   const clearCart = useCallback(() => {
-    setCart([]);
-  }, []);
+    if (!activeTable) return;
+    setCarts((prevCarts) => {
+      const copy = { ...prevCarts };
+      delete copy[activeTable];
+      return copy;
+    });
+  }, [activeTable]);
 
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.producto.precio * item.cantidad, 0);
@@ -87,8 +156,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart,
       total,
       totalItems,
+      activeTable,
+      setActiveTable,
+      getTableCart,
     }),
-    [cart, addToCart, removeFromCart, decrementQuantity, clearCart, total, totalItems]
+    [cart, addToCart, removeFromCart, decrementQuantity, clearCart, total, totalItems, activeTable, getTableCart]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -18,6 +18,8 @@ export interface Orden {
   estado: EstadoOrden;
   tipo_comprobante: TipoComprobante;
   documento_cliente: string | null; // DNI o RUC
+  mesa?: string | null;
+  creado_por?: string | null;
   created_at?: string;
 }
 
@@ -38,4 +40,12 @@ export interface OrdenDetalle {
 export interface CartItem {
   producto: Producto;
   cantidad: number;
+}
+
+export interface Mesa {
+  id: number;
+  nombre: string;
+  estado: 'libre' | 'ocupada';
+  atendido_por: string | null;
+  created_at?: string;
 }

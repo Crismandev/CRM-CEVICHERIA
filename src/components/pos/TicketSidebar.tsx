@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 import type { TipoComprobante, Orden } from '../../types/database';
 import { db } from '../../services/db';
 import { useToast } from '../../hooks/useToast';
@@ -12,7 +13,8 @@ interface TicketSidebarProps {
 
 export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess, setPrintData }) => {
   const { showToast } = useToast();
-  const { cart, decrementQuantity, addToCart, total, clearCart } = useCart();
+  const { user } = useAuth();
+  const { cart, decrementQuantity, addToCart, total, clearCart, activeTable } = useCart();
   const [tipoComprobante, setTipoComprobante] = useState<TipoComprobante>('ticket');
   const [documentoCliente, setDocumentoCliente] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -56,7 +58,9 @@ export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess,
         total,
         tipoComprobante,
         documentoCliente || null,
-        orderItems
+        orderItems,
+        activeTable,
+        user?.email || null
       );
 
       const printItems = cart.map((item) => ({
@@ -161,6 +165,14 @@ export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess,
       {/* Formulario de Comprobante y Cobro */}
       <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-4 flex-shrink-0">
         
+        {/* Selector de Mesa */}
+        <div className="space-y-1">
+          <span className="text-2xs font-extrabold text-slate-400 uppercase tracking-wider block">Ubicación / Mesa</span>
+          <div className="px-3 py-2 bg-slate-100 rounded-lg text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            🏠 {activeTable || 'Sin mesa'}
+          </div>
+        </div>
+
         {/* Selector de Comprobante (Diseño Minimalista) */}
         <div className="space-y-1.5">
           <span className="text-2xs font-extrabold text-slate-400 uppercase tracking-wider block">Documento de Venta</span>
