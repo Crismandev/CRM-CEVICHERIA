@@ -20,26 +20,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const determineRole = (email: string | undefined): UserRole => {
-    return email === 'admin@elpuerto.com' ? 'admin' : 'mesero';
+  const determineRole = async (currentUser: User): Promise<UserRole> => {
+    if (currentUser.email === 'admin@elpuerto.com') return 'admin';
+    
+    // 1. Probar desde metadatos de usuario (sincronizado al crear/actualizar)
+    if (currentUser.user_metadata?.rol === 'admin' || currentUser.user_metadata?.rol === 'mesero') {
+      return currentUser.user_metadata.rol as UserRole;
+    }
+    
+    // 2. Fallback: Consultar base de datos
+    try {
+      const { data, error } = await supabase
+        .from('perfiles')
+        .select('rol')
+        .eq('id', currentUser.id)
+        .single();
+      if (!error && data?.rol) {
+        return data.rol as UserRole;
+      }
+    } catch (err) {
+      console.error('Error al obtener rol de base de datos:', err);
+    }
+    return 'mesero';
   };
 
   useEffect(() => {
+    const handleAuthChange = async (currentUser: User | null) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const userRole = await determineRole(currentUser);
+        setRole(userRole);
+      } else {
+        setRole(null);
+      }
+      setLoading(false);
+    };
+
     // 1. Obtener la sesión actual de Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setRole(currentUser ? determineRole(currentUser.email) : null);
-      setLoading(false);
+      handleAuthChange(session?.user ?? null);
     });
 
     // 2. Escuchar cambios de autenticación en tiempo real
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        setRole(currentUser ? determineRole(currentUser.email) : null);
-        setLoading(false);
+        handleAuthChange(session?.user ?? null);
       }
     );
 

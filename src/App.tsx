@@ -59,11 +59,7 @@ const AppContent = () => {
         <Route path="/ordenes" element={<OrdersPage />} />
         <Route 
           path="/inventario" 
-          element={
-            <AdminRouteGuard>
-              <InventoryPage />
-            </AdminRouteGuard>
-          } 
+          element={<InventoryPage />} 
         />
         <Route 
           path="/usuarios" 

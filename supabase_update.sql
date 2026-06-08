@@ -143,22 +143,31 @@ CREATE TABLE IF NOT EXISTS public.perfiles (
 -- Habilitar RLS en perfiles
 ALTER TABLE public.perfiles ENABLE ROW LEVEL SECURITY;
 
+-- Función de ayuda SECURITY DEFINER para verificar si el usuario ejecutor es administrador sin causar recursión RLS
+CREATE OR REPLACE FUNCTION public.es_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN (
+    (auth.jwt() ->> 'email' = 'admin@elpuerto.com') OR
+    EXISTS (
+      SELECT 1 FROM public.perfiles 
+      WHERE id = auth.uid() AND rol = 'admin'
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Políticas RLS para perfiles
 DROP POLICY IF EXISTS "Permitir select a autenticados en perfiles" ON perfiles;
 CREATE POLICY "Permitir select a autenticados en perfiles" ON perfiles
 FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Permitir todo a administradores en perfiles" ON perfiles;
-CREATE POLICY "Permitir todo a administradores en perfiles" ON perfiles
-FOR ALL TO authenticated
-USING (
-    (auth.jwt() ->> 'email' = 'admin@elpuerto.com') OR
-    EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin')
-)
-WITH CHECK (
-    (auth.jwt() ->> 'email' = 'admin@elpuerto.com') OR
-    EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin')
-);
+DROP POLICY IF EXISTS "Permitir gestion de perfiles a administradores" ON perfiles;
+CREATE POLICY "Permitir gestion de perfiles a administradores" ON perfiles
+FOR INSERT, UPDATE, DELETE TO authenticated
+USING (public.es_admin())
+WITH CHECK (public.es_admin());
 
 -- Función de trigger para registrar perfiles automáticamente cuando se crea un usuario en auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -201,10 +210,7 @@ DECLARE
     new_user_id UUID;
 BEGIN
     -- Validar que el ejecutor sea admin
-    IF NOT EXISTS (
-        SELECT 1 FROM public.perfiles 
-        WHERE id = auth.uid() AND rol = 'admin'
-    ) AND (auth.jwt() ->> 'email') != 'admin@elpuerto.com' THEN
+    IF NOT public.es_admin() THEN
         RAISE EXCEPTION 'No autorizado. Se requieren privilegios de administrador.';
     END IF;
 
@@ -246,10 +252,7 @@ DECLARE
     target_user_id UUID;
 BEGIN
     -- Validar que el ejecutor sea admin
-    IF NOT EXISTS (
-        SELECT 1 FROM public.perfiles 
-        WHERE id = auth.uid() AND rol = 'admin'
-    ) AND (auth.jwt() ->> 'email') != 'admin@elpuerto.com' THEN
+    IF NOT public.es_admin() THEN
         RAISE EXCEPTION 'No autorizado. Se requieren privilegios de administrador.';
     END IF;
 
@@ -282,10 +285,7 @@ CREATE OR REPLACE FUNCTION public.admin_cambiar_rol(
 ) RETURNS VOID AS $$
 BEGIN
     -- Validar que el ejecutor sea admin
-    IF NOT EXISTS (
-        SELECT 1 FROM public.perfiles 
-        WHERE id = auth.uid() AND rol = 'admin'
-    ) AND (auth.jwt() ->> 'email') != 'admin@elpuerto.com' THEN
+    IF NOT public.es_admin() THEN
         RAISE EXCEPTION 'No autorizado. Se requieren privilegios de administrador.';
     END IF;
 
