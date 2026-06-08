@@ -164,10 +164,18 @@ FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Permitir todo a administradores en perfiles" ON perfiles;
 DROP POLICY IF EXISTS "Permitir gestion de perfiles a administradores" ON perfiles;
-CREATE POLICY "Permitir gestion de perfiles a administradores" ON perfiles
-FOR INSERT, UPDATE, DELETE TO authenticated
-USING (public.es_admin())
-WITH CHECK (public.es_admin());
+DROP POLICY IF EXISTS "Permitir insert a administradores en perfiles" ON perfiles;
+DROP POLICY IF EXISTS "Permitir update a administradores en perfiles" ON perfiles;
+DROP POLICY IF EXISTS "Permitir delete a administradores en perfiles" ON perfiles;
+
+CREATE POLICY "Permitir insert a administradores en perfiles" ON perfiles
+FOR INSERT TO authenticated WITH CHECK (public.es_admin());
+
+CREATE POLICY "Permitir update a administradores en perfiles" ON perfiles
+FOR UPDATE TO authenticated USING (public.es_admin()) WITH CHECK (public.es_admin());
+
+CREATE POLICY "Permitir delete a administradores en perfiles" ON perfiles
+FOR DELETE TO authenticated USING (public.es_admin());
 
 -- Función de trigger para registrar perfiles automáticamente cuando se crea un usuario en auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
