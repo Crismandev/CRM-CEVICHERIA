@@ -244,6 +244,27 @@ BEGIN
     )
     RETURNING id INTO new_user_id;
 
+    -- Vincular una identidad para permitir el login (Supabase GoTrue)
+    INSERT INTO auth.identities (
+        id, 
+        user_id, 
+        identity_data, 
+        provider, 
+        provider_id, 
+        last_sign_in_at, 
+        created_at, 
+        updated_at
+    ) VALUES ( 
+        new_user_id::text, 
+        new_user_id, 
+        jsonb_build_object('sub', new_user_id::text, 'email', email_val), 
+        'email', 
+        new_user_id::text, 
+        now(), 
+        now(), 
+        now()
+    );
+
     -- Insertar en perfiles (para mayor fiabilidad)
     INSERT INTO public.perfiles (id, email, rol)
     VALUES (new_user_id, email_val, rol_val)
@@ -318,3 +339,44 @@ BEGIN
     WHERE email = user_email_val;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- 13. Sincronizar identidades faltantes para colaboradores creados anteriormente
+INSERT INTO auth.identities (
+    id, 
+    user_id, 
+    identity_data, 
+    provider, 
+    provider_id, 
+    last_sign_in_at, 
+    created_at, 
+    updated_at
+)
+SELECT 
+    id::text, 
+    id, 
+    jsonb_build_object('sub', id::text, 'email', email), 
+    'email', 
+    id::text, 
+    now(), 
+    now(), 
+    now()
+FROM auth.users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM auth.identities i WHERE i.user_id = u.id
+)
+ON CONFLICT DO NOTHING;
+
+
+-- 14. Políticas RLS adicionales para la tabla mesas (INSERT y DELETE) para administradores
+DROP POLICY IF EXISTS "Permitir insercion de mesas a administradores" ON mesas;
+CREATE POLICY "Permitir insercion de mesas a administradores" 
+ON mesas FOR INSERT 
+TO authenticated 
+WITH CHECK (public.es_admin());
+
+DROP POLICY IF EXISTS "Permitir eliminacion de mesas a administradores" ON mesas;
+CREATE POLICY "Permitir eliminacion de mesas a administradores" 
+ON mesas FOR DELETE 
+TO authenticated 
+USING (public.es_admin());

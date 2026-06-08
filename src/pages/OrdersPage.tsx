@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { Orden, OrdenDetalle } from '../types/database';
 import { PrintReceipt } from '../components/pos/PrintReceipt';
 import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import { 
   History, Search, Eye, Ban, 
   TrendingUp, XCircle, Printer 
@@ -11,6 +12,7 @@ import {
 
 export const OrdersPage: React.FC = () => {
   const { showToast } = useToast();
+  const { askConfirm } = useConfirm();
   const { role } = useAuth();
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,18 +70,22 @@ export const OrdersPage: React.FC = () => {
     }
   };
 
-  const handleAnnulOrder = async (ordenId: string) => {
-    if (!window.confirm('¿Está seguro de que desea ANULAR este comprobante? El stock de los platos vendidos se devolverá al inventario automáticamente.')) {
-      return;
-    }
-    try {
-      await db.anularOrden(ordenId);
-      showToast('Orden anulada exitosamente. El inventario ha sido restaurado.', 'success');
-      setSelectedOrden((prev) => prev ? { ...prev, estado: 'anulado' } : null);
-      fetchOrdenes();
-    } catch (err: any) {
-      showToast(`Error al anular orden: ${err.message || err}`, 'error');
-    }
+  const handleAnnulOrder = (ordenId: string) => {
+    askConfirm({
+      title: 'Anular Comprobante',
+      message: '¿Está seguro de que desea ANULAR este comprobante? El stock de los platos vendidos se devolverá al inventario automáticamente.',
+      confirmText: 'Anular Comprobante',
+      onConfirm: async () => {
+        try {
+          await db.anularOrden(ordenId);
+          showToast('Orden anulada exitosamente. El inventario ha sido restaurado.', 'success');
+          setSelectedOrden((prev) => prev ? { ...prev, estado: 'anulado' } : null);
+          fetchOrdenes();
+        } catch (err: any) {
+          showToast(`Error al anular orden: ${err.message || err}`, 'error');
+        }
+      }
+    });
   };
 
   const handleReprint = () => {

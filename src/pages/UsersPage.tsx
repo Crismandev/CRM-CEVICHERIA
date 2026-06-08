@@ -2,12 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { db } from '../services/db';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import type { Perfil } from '../types/database';
 import { UserPlus, Trash2, Shield, User, ShieldAlert, X, KeyRound } from 'lucide-react';
 
 export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { showToast } = useToast();
+  const { askConfirm } = useConfirm();
   const [perfiles, setPerfiles] = useState<Perfil[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -84,7 +86,7 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleEliminarUsuario = async (userEmail: string) => {
+  const handleEliminarUsuario = (userEmail: string) => {
     if (userEmail === currentUser?.email) {
       showToast('No puedes eliminar tu propia cuenta.', 'error');
       return;
@@ -94,18 +96,21 @@ export const UsersPage: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`¿Está seguro de que desea eliminar a ${userEmail}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
-    try {
-      await db.eliminarUsuarioAdmin(userEmail);
-      showToast('Colaborador eliminado exitosamente.', 'success');
-      fetchPerfiles();
-    } catch (err: any) {
-      console.error(err);
-      showToast(err.message || 'Error al eliminar el colaborador.', 'error');
-    }
+    askConfirm({
+      title: 'Eliminar Colaborador',
+      message: `¿Está seguro de que desea eliminar a ${userEmail}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar Colaborador',
+      onConfirm: async () => {
+        try {
+          await db.eliminarUsuarioAdmin(userEmail);
+          showToast('Colaborador eliminado exitosamente.', 'success');
+          fetchPerfiles();
+        } catch (err: any) {
+          console.error(err);
+          showToast(err.message || 'Error al eliminar el colaborador.', 'error');
+        }
+      }
+    });
   };
 
   return (

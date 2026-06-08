@@ -3,15 +3,21 @@ import { db } from '../services/db';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import type { Producto, Orden, Mesa } from '../types/database';
 import { ProductGrid } from '../components/pos/ProductGrid';
 import { TicketSidebar } from '../components/pos/TicketSidebar';
 import { PrintReceipt } from '../components/pos/PrintReceipt';
-import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, Shield, User, Coffee, Plus, Trash2 } from 'lucide-react';
+import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, Shield, User, Coffee, Plus, Trash2, X } from 'lucide-react';
 
 export const POSPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { activeTable, setActiveTable, clearCart } = useCart();
+  const { showToast } = useToast();
+  const { askConfirm } = useConfirm();
+  const [showAddMesaModal, setShowAddMesaModal] = useState(false);
+  const [nuevaMesaNombre, setNuevaMesaNombre] = useState('');
   const [productos, setProductos] = useState<Producto[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,41 +133,64 @@ export const POSPage: React.FC = () => {
     }
   };
 
-  const handleLiberarMesa = async (mesa: Mesa) => {
-    if (!window.confirm(`¿Liberar la ${mesa.nombre}? Esto vaciará su pedido actual.`)) return;
+  const handleLiberarMesa = (mesa: Mesa) => {
+    askConfirm({
+      title: 'Liberar Mesa',
+      message: `¿Está seguro de que desea liberar la ${mesa.nombre}? Esto vaciará su pedido actual.`,
+      confirmText: 'Liberar Mesa',
+      onConfirm: async () => {
+        try {
+          await db.updateMesaEstado(mesa.id, 'libre', null);
+          setActiveTable(mesa.nombre);
+          setTimeout(() => {
+            clearCart();
+            setActiveTable(null);
+          }, 50);
+          showToast(`La ${mesa.nombre} ha sido liberada.`, 'info');
+        } catch (err: any) {
+          console.error('Error al liberar mesa:', err);
+          showToast('Error al liberar mesa: ' + (err.message || err), 'error');
+        }
+      }
+    });
+  };
+
+  const handleAgregarMesaClick = () => {
+    setShowAddMesaModal(true);
+  };
+
+  const handleAgregarMesaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevaMesaNombre || !nuevaMesaNombre.trim()) {
+      showToast('Por favor ingrese un nombre para la mesa.', 'error');
+      return;
+    }
     try {
-      // Liberar en DB
-      await db.updateMesaEstado(mesa.id, 'libre', null);
-      // Vaciar carrito local de esa mesa
-      setActiveTable(mesa.nombre);
-      setTimeout(() => {
-        clearCart();
-        setActiveTable(null);
-      }, 50);
+      await db.addMesa(nuevaMesaNombre.trim());
+      showToast(`Mesa "${nuevaMesaNombre.trim()}" agregada exitosamente.`, 'success');
+      setShowAddMesaModal(false);
+      setNuevaMesaNombre('');
+      fetchMesas();
     } catch (err: any) {
-      console.error('Error al liberar mesa:', err);
+      showToast('Error al agregar mesa: ' + (err.message || err), 'error');
     }
   };
 
-  const handleAgregarMesaClick = async () => {
-    const nombre = prompt('Ingrese el nombre de la nueva mesa o ubicación (ej: Mesa 7, Barra 3):');
-    if (!nombre || !nombre.trim()) return;
-    try {
-      await db.addMesa(nombre.trim());
-      fetchMesas();
-    } catch (err: any) {
-      alert('Error al agregar mesa: ' + (err.message || err));
-    }
-  };
-
-  const handleEliminarMesa = async (mesa: Mesa) => {
-    if (!window.confirm(`¿Está seguro de que desea eliminar permanentemente la ${mesa.nombre}?`)) return;
-    try {
-      await db.deleteMesa(mesa.id);
-      fetchMesas();
-    } catch (err: any) {
-      alert('Error al eliminar mesa: ' + (err.message || err));
-    }
+  const handleEliminarMesa = (mesa: Mesa) => {
+    askConfirm({
+      title: 'Eliminar Mesa',
+      message: `¿Está seguro de que desea eliminar permanentemente la ${mesa.nombre}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar Mesa',
+      onConfirm: async () => {
+        try {
+          await db.deleteMesa(mesa.id);
+          showToast(`La ${mesa.nombre} fue eliminada exitosamente.`, 'success');
+          fetchMesas();
+        } catch (err: any) {
+          showToast('Error al eliminar mesa: ' + (err.message || err), 'error');
+        }
+      }
+    });
   };
 
   const activeMesaObj = mesas.find(m => m.nombre === activeTable);
@@ -406,6 +435,61 @@ export const POSPage: React.FC = () => {
             }} 
             setPrintData={setPrintData}
           />
+        </div>
+      )}
+
+      {/* Modal para Agregar Mesa */}
+      {showAddMesaModal && (
+        <div className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-slide-in">
+            {/* Header */}
+            <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-slate-700" />
+                <h3 className="font-extrabold text-slate-800 uppercase tracking-wide text-xs">Agregar Mesa / Barra</h3>
+              </div>
+              <button
+                onClick={() => setShowAddMesaModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleAgregarMesaSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-3xs font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                  Nombre / Ubicación *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nuevaMesaNombre}
+                  onChange={(e) => setNuevaMesaNombre(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-500 text-sm placeholder-slate-400 bg-slate-50/50"
+                  placeholder="Ej: Mesa 7 o Barra 3"
+                />
+              </div>
+
+              {/* Acciones */}
+              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMesaModal(false)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Agregar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

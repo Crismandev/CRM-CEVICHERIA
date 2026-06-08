@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { Producto, CartItem } from '../types/database';
+import { useToast } from './useToast';
 
 interface CartContextType {
   cart: CartItem[];
@@ -17,6 +18,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { showToast } = useToast();
   // Estado de carritos indexados por mesa (ej: { 'Mesa 1': [...], 'Mesa 2': [...] })
   const [carts, setCarts] = useState<{ [table: string]: CartItem[] }>(() => {
     try {
@@ -57,7 +59,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const existingItem = prevCart[existingItemIndex];
         // Validar stock disponible
         if (existingItem.cantidad >= producto.stock_disponible) {
-          alert(`No hay suficiente stock disponible para ${producto.nombre} (Stock: ${producto.stock_disponible})`);
+          showToast(`No hay suficiente stock disponible para ${producto.nombre} (Stock: ${producto.stock_disponible})`, 'error');
           return prevCarts;
         }
         newCart[existingItemIndex] = {
@@ -66,7 +68,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       } else {
         if (producto.stock_disponible < 1) {
-          alert(`No hay stock disponible para ${producto.nombre}`);
+          showToast(`No hay stock disponible para ${producto.nombre}`, 'error');
           return prevCarts;
         }
         newCart = [...prevCart, { producto, cantidad: 1 }];
