@@ -2,6 +2,11 @@
 -- MIGRACIÓN DE SEGURIDAD, AMPLIACIÓN DE ESQUEMA Y MESAS EN TIEMPO REAL
 -- =========================================================================
 
+-- Asegurar propiedad de las tablas para evitar el error 42501 (must be owner)
+ALTER TABLE IF EXISTS public.productos OWNER TO postgres;
+ALTER TABLE IF EXISTS public.ordenes OWNER TO postgres;
+ALTER TABLE IF EXISTS public.orden_detalles OWNER TO postgres;
+
 -- 1. Ampliar la tabla de órdenes para almacenar la mesa y el mesero
 ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS mesa TEXT;
 ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS creado_por TEXT;
