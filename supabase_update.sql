@@ -1,6 +1,6 @@
--- =========================================================================
--- MIGRACIÓN DE SEGURIDAD, AMPLIACIÓN DE ESQUEMA Y MESAS EN TIEMPO REAL
--- =========================================================================
+-- Intentar otorgar privilegios en el esquema public en caso de que estén restringidos (PostgreSQL 15+)
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
 
 -- NOTA: Las modificaciones sobre 'productos', 'ordenes' y 'orden_detalles' ya
 -- fueron ejecutadas en pasos anteriores. Se omiten para evitar errores de propiedad (42501).
