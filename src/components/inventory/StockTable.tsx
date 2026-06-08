@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { Producto } from '../../types/database';
 import { db } from '../../services/db';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../hooks/useAuth';
 import { Edit2, Plus, Save, Search, CheckCircle, XCircle } from 'lucide-react';
 
 interface StockTableProps {
@@ -11,6 +12,7 @@ interface StockTableProps {
 
 export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) => {
   const { showToast } = useToast();
+  const { role } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   
@@ -129,13 +131,15 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
         </div>
 
         {/* Botón Agregar Plato */}
-        <button
-          onClick={handleAddClick}
-          className="w-full md:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-md flex items-center justify-center gap-2 transition-colors cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Agregar Plato / Bebida
-        </button>
+        {role === 'admin' && (
+          <button
+            onClick={handleAddClick}
+            className="w-full md:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-md flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar Plato / Bebida
+          </button>
+        )}
       </div>
 
       {/* Tabla de Gestión */}
@@ -148,7 +152,7 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
               <th className="p-4">Precio</th>
               <th className="p-4">Stock Disponible</th>
               <th className="p-4">Estado</th>
-              <th className="p-4 text-right">Acciones</th>
+              {role === 'admin' && <th className="p-4 text-right">Acciones</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -178,32 +182,40 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
                     {/* Precio */}
                     <td className="p-4 font-mono">S/ {p.precio.toFixed(2)}</td>
 
-                    {/* Stock disponible (edición rápida) */}
+                    {/* Stock disponible (edición rápida solo para admin) */}
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="0"
-                          value={stockEditVal}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value, 10);
-                            setQuickStock((prev) => ({
-                              ...prev,
-                              [p.id]: isNaN(val) ? 0 : val,
-                            }));
-                          }}
-                          className="w-20 px-2 py-1 border border-slate-200 rounded text-center focus:outline-none focus:border-slate-400"
-                        />
-                        {isDirty && (
-                          <button
-                            onClick={() => handleQuickStockSave(p.id)}
-                            className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors cursor-pointer"
-                            title="Guardar stock"
-                          >
-                            <Save className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
+                      {role === 'admin' ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={stockEditVal}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              setQuickStock((prev) => ({
+                                ...prev,
+                                [p.id]: isNaN(val) ? 0 : val,
+                              }));
+                            }}
+                            className="w-20 px-2 py-1 border border-slate-200 rounded text-center focus:outline-none focus:border-slate-400"
+                          />
+                          {isDirty && (
+                            <button
+                              onClick={() => handleQuickStockSave(p.id)}
+                              className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors cursor-pointer"
+                              title="Guardar stock"
+                            >
+                              <Save className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className={`font-bold font-mono px-2.5 py-1 rounded-md text-xs ${
+                          p.stock_disponible <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {p.stock_disponible} unds
+                        </span>
+                      )}
                     </td>
 
                     {/* Estado activo/inactivo */}
@@ -220,15 +232,17 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
                     </td>
 
                     {/* Acciones */}
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleEditClick(p)}
-                        className="p-2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                        title="Editar plato completo"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                    </td>
+                    {role === 'admin' && (
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => handleEditClick(p)}
+                          className="p-2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                          title="Editar plato completo"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })

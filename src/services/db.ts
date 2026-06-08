@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Producto, Orden, OrdenDetalle, TipoComprobante, Mesa } from '../types/database';
+import type { Producto, Orden, OrdenDetalle, TipoComprobante, Mesa, Perfil } from '../types/database';
 
 export const db = {
   // Productos
@@ -166,5 +166,69 @@ export const db = {
         }
       )
       .subscribe();
+  },
+
+  // Gestión de Mesas Dinámica
+  async addMesa(nombre: string): Promise<void> {
+    const { data } = await supabase
+      .from('mesas')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1);
+
+    const nextId = data && data.length > 0 ? data[0].id + 1 : 1;
+
+    const { error } = await supabase
+      .from('mesas')
+      .insert([{ id: nextId, nombre, estado: 'libre' }]);
+
+    if (error) throw error;
+  },
+
+  async deleteMesa(id: number): Promise<void> {
+    const { error } = await supabase
+      .from('mesas')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // Gestión de Personal (Usuarios)
+  async getPerfiles(): Promise<Perfil[]> {
+    const { data, error } = await supabase
+      .from('perfiles')
+      .select('*')
+      .order('email', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async crearUsuarioAdmin(email: string, password_val: string, rol_val: string): Promise<void> {
+    const { error } = await supabase.rpc('admin_crear_usuario', {
+      email_val: email,
+      password_val: password_val,
+      rol_val: rol_val
+    });
+
+    if (error) throw error;
+  },
+
+  async eliminarUsuarioAdmin(userEmail: string): Promise<void> {
+    const { error } = await supabase.rpc('admin_eliminar_usuario', {
+      user_email_val: userEmail
+    });
+
+    if (error) throw error;
+  },
+
+  async cambiarRolAdmin(userEmail: string, nuevoRol: string): Promise<void> {
+    const { error } = await supabase.rpc('admin_cambiar_rol', {
+      user_email_val: userEmail,
+      nuevo_rol_val: nuevoRol
+    });
+
+    if (error) throw error;
   }
 };

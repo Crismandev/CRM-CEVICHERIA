@@ -49,3 +49,10 @@ export interface Mesa {
   atendido_por: string | null;
   created_at?: string;
 }
+
+export interface Perfil {
+  id: string;
+  email: string;
+  rol: 'admin' | 'mesero';
+  created_at?: string;
+}

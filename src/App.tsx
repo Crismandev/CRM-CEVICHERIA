@@ -8,6 +8,7 @@ import { POSPage } from './pages/POSPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { LoginPage } from './pages/LoginPage';
+import { UsersPage } from './pages/UsersPage';
 
 // Componente para denegar el acceso a meseros en la ruta de inventario
 const AdminRouteGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,6 +62,14 @@ const AppContent = () => {
           element={
             <AdminRouteGuard>
               <InventoryPage />
+            </AdminRouteGuard>
+          } 
+        />
+        <Route 
+          path="/usuarios" 
+          element={
+            <AdminRouteGuard>
+              <UsersPage />
             </AdminRouteGuard>
           } 
         />

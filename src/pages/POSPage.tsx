@@ -7,7 +7,7 @@ import type { Producto, Orden, Mesa } from '../types/database';
 import { ProductGrid } from '../components/pos/ProductGrid';
 import { TicketSidebar } from '../components/pos/TicketSidebar';
 import { PrintReceipt } from '../components/pos/PrintReceipt';
-import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, Shield, User, Coffee } from 'lucide-react';
+import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, Shield, User, Coffee, Plus, Trash2 } from 'lucide-react';
 
 export const POSPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
@@ -143,6 +143,27 @@ export const POSPage: React.FC = () => {
     }
   };
 
+  const handleAgregarMesaClick = async () => {
+    const nombre = prompt('Ingrese el nombre de la nueva mesa o ubicación (ej: Mesa 7, Barra 3):');
+    if (!nombre || !nombre.trim()) return;
+    try {
+      await db.addMesa(nombre.trim());
+      fetchMesas();
+    } catch (err: any) {
+      alert('Error al agregar mesa: ' + (err.message || err));
+    }
+  };
+
+  const handleEliminarMesa = async (mesa: Mesa) => {
+    if (!window.confirm(`¿Está seguro de que desea eliminar permanentemente la ${mesa.nombre}?`)) return;
+    try {
+      await db.deleteMesa(mesa.id);
+      fetchMesas();
+    } catch (err: any) {
+      alert('Error al eliminar mesa: ' + (err.message || err));
+    }
+  };
+
   const activeMesaObj = mesas.find(m => m.nombre === activeTable);
 
   return (
@@ -194,6 +215,15 @@ export const POSPage: React.FC = () => {
               <div className="flex items-center gap-4 text-2xs font-bold uppercase text-slate-500">
                 <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Libres</span>
                 <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-500"></span> Ocupadas</span>
+                {isAdmin && (
+                  <button
+                    onClick={handleAgregarMesaClick}
+                    className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-3xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Agregar Mesa
+                  </button>
+                )}
               </div>
             </div>
 
@@ -221,7 +251,21 @@ export const POSPage: React.FC = () => {
                       <div className="p-4 border-b border-slate-100 flex items-start justify-between">
                         <div className="space-y-1">
                           <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ubicación</span>
-                          <h4 className="text-base font-black text-slate-800 leading-tight">{mesa.nombre}</h4>
+                          <h4 className="text-base font-black text-slate-800 leading-tight flex items-center gap-1.5">
+                            {mesa.nombre}
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEliminarMesa(mesa);
+                                }}
+                                className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-md transition-colors cursor-pointer"
+                                title="Eliminar Mesa"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </h4>
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-wider ${
                           isOccupied ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'

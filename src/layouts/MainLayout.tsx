@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
-import { ChefHat, ShoppingBag, Package, LogOut, Anchor, History, ShieldAlert } from 'lucide-react';
+import { ChefHat, ShoppingBag, Package, LogOut, Anchor, History, ShieldAlert, Users } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -25,8 +25,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Punto de Venta', href: '/', icon: ShoppingBag },
     { name: 'Historial / Ventas', href: '/ordenes', icon: History },
+    { name: role === 'admin' ? 'Inventario / Platos' : 'Consulta de Stock', href: '/inventario', icon: Package },
     ...(role === 'admin'
-      ? [{ name: 'Inventario / Platos', href: '/inventario', icon: Package }]
+      ? [{ name: 'Gestión de Personal', href: '/usuarios', icon: Users }]
       : []),
   ];
 
@@ -109,7 +110,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              Servicio Online (Supabase)
+              En Línea
             </div>
           </div>
         </header>
