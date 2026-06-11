@@ -47,36 +47,41 @@ DROP POLICY IF EXISTS "Permitir actualizacion de mesas a autenticados" ON mesas;
 -- 6. Establecer políticas RLS basadas en autenticación y roles
 
 -- === TABLA: PRODUCTOS ===
--- (Ya configurada previamente)
--- CREATE POLICY "Permitir lectura de productos a autenticados" 
--- ON productos FOR SELECT 
--- TO authenticated 
--- USING (true);
+DROP POLICY IF EXISTS "Permitir lectura de productos a autenticados" ON productos;
+CREATE POLICY "Permitir lectura de productos a autenticados" 
+ON productos FOR SELECT 
+TO authenticated 
+USING (true);
 
--- CREATE POLICY "Permitir gestion de productos solo a administradores" 
--- ON productos FOR ALL 
--- TO authenticated 
--- USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
--- WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
+DROP POLICY IF EXISTS "Permitir gestion de productos solo a administradores" ON productos;
+DROP POLICY IF EXISTS "Permitir gestion de productos a administradores" ON productos;
+CREATE POLICY "Permitir gestion de productos a administradores" 
+ON productos FOR ALL 
+TO authenticated 
+USING (public.es_admin())
+WITH CHECK (public.es_admin());
 
 
 -- === TABLA: ORDENES ===
--- (Ya configurada previamente)
--- CREATE POLICY "Permitir lectura de ordenes a autenticados" 
--- ON ordenes FOR SELECT 
--- TO authenticated 
--- USING (true);
+DROP POLICY IF EXISTS "Permitir lectura de ordenes a autenticados" ON ordenes;
+CREATE POLICY "Permitir lectura de ordenes a autenticados" 
+ON ordenes FOR SELECT 
+TO authenticated 
+USING (true);
 
--- CREATE POLICY "Permitir creacion de ordenes a autenticados" 
--- ON ordenes FOR INSERT 
--- TO authenticated 
--- WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir creacion de ordenes a autenticados" ON ordenes;
+CREATE POLICY "Permitir creacion de ordenes a autenticados" 
+ON ordenes FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
 
--- CREATE POLICY "Permitir anular/modificar ordenes solo a administradores" 
--- ON ordenes FOR UPDATE 
--- TO authenticated 
--- USING (auth.jwt() ->> 'email' = 'admin@elpuerto.com')
--- WITH CHECK (auth.jwt() ->> 'email' = 'admin@elpuerto.com');
+DROP POLICY IF EXISTS "Permitir anular/modificar ordenes solo a administradores" ON ordenes;
+DROP POLICY IF EXISTS "Permitir anular/modificar ordenes a administradores" ON ordenes;
+CREATE POLICY "Permitir anular/modificar ordenes a administradores" 
+ON ordenes FOR UPDATE 
+TO authenticated 
+USING (public.es_admin())
+WITH CHECK (public.es_admin());
 
 
 -- === TABLA: ORDEN_DETALLES ===
@@ -228,9 +233,10 @@ BEGIN
 
     -- Generar UUID y crear en auth.users
     INSERT INTO auth.users (
-        instance_id, id, email, encrypted_password, email_confirmed_at, 
+        instance_id, id, email, encrypted_password, email_confirmed_at,
         raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
-        role, aud, confirmation_token
+        role, aud, confirmation_token, recovery_token, email_change_token_new,
+        email_change, email_change_token_current, reauthentication_token
     )
     VALUES (
         '00000000-0000-0000-0000-000000000000',
@@ -244,6 +250,11 @@ BEGIN
         now(),
         'authenticated',
         'authenticated',
+        '',
+        '',
+        '',
+        '',
+        '',
         ''
     )
     RETURNING id INTO new_user_id;

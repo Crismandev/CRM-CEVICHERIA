@@ -28,3 +28,8 @@ dist-ssr
 .env.*
 .agents/
 .gemini/
+
+# Local files
+cevicheria.code-workspace
+context.md
+master/

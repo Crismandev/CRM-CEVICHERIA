@@ -37,10 +37,11 @@ export const db = {
 
   async saveProducto(producto: Omit<Producto, 'id'> & { id?: string }): Promise<Producto> {
     if (producto.id) {
+      const { id, ...updateData } = producto;
       const { data, error } = await supabase
           .from('productos')
-          .update(producto)
-          .eq('id', producto.id)
+          .update(updateData)
+          .eq('id', id)
           .select()
           .single();
       if (error) throw error;
@@ -54,6 +55,15 @@ export const db = {
       if (error) throw error;
       return data;
     }
+  },
+
+  async deleteProducto(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('productos')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   },
 
   // Órdenes

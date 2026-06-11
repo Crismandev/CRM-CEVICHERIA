@@ -3,7 +3,8 @@ import type { Producto } from '../../types/database';
 import { db } from '../../services/db';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
-import { Edit2, Plus, Save, Search, CheckCircle, XCircle } from 'lucide-react';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Edit2, Plus, Save, Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface StockTableProps {
   productos: Producto[];
@@ -13,6 +14,7 @@ interface StockTableProps {
 export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) => {
   const { showToast } = useToast();
   const { role } = useAuth();
+  const { askConfirm } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   
@@ -95,6 +97,28 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
     } catch (err: any) {
       showToast(`Error al guardar plato: ${err.message || err}`, 'error');
     }
+  };
+
+  const handleDeleteProduct = async (id: string, name: string) => {
+    askConfirm({
+      title: 'Eliminar Plato / Bebida',
+      message: `¿Está seguro de que desea eliminar "${name}"? Esta acción no se puede deshacer y fallará si el plato ya tiene registros de venta.`,
+      confirmText: 'Eliminar Plato',
+      onConfirm: async () => {
+        try {
+          await db.deleteProducto(id);
+          setShowFormModal(false);
+          onRefresh();
+          showToast('Plato eliminado exitosamente.', 'success');
+        } catch (err: any) {
+          if (err.code === '23503') {
+            showToast('No se puede eliminar el plato porque tiene ventas registradas. Se recomienda desactivarlo en su lugar.', 'error');
+          } else {
+            showToast(`Error al eliminar el plato: ${err.message || err}`, 'error');
+          }
+        }
+      }
+    });
   };
 
   return (
@@ -352,20 +376,35 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFormModal(false)}
-                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-md text-sm font-semibold cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-semibold cursor-pointer"
-                >
-                  Guardar Plato
-                </button>
+              <div className="pt-4 border-t border-slate-100 flex justify-between items-center gap-2">
+                <div>
+                  {formProduct.id && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProduct(formProduct.id!, formProduct.nombre || '')}
+                      className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                      title="Eliminar plato"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowFormModal(false)}
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-md text-sm font-semibold cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-semibold cursor-pointer"
+                  >
+                    Guardar Plato
+                  </button>
+                </div>
               </div>
             </form>
           </div>
