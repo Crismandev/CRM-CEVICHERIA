@@ -266,61 +266,62 @@ export const POSPage: React.FC = () => {
 
           {/* Sección de Mesas */}
           <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 pb-3 gap-3">
-              <div>
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Distribución del Salón & Barra</h3>
-                <p className="text-2xs text-slate-500 font-bold uppercase mt-1">Busca y selecciona una mesa directamente. Un toque para ocupar o gestionar.</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-2xs font-bold uppercase text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Libres</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-indigo-500"></span> Mis Mesas</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500"></span> Otras</span>
+            {/* Controles de Búsqueda, Filtros y Gestión */}
+            <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-100">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Distribución de Mesas</h3>
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400">
+                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Libres</span>
+                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Propias</span>
+                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Otras</span>
+                  </div>
+                </div>
                 {isAdmin && (
                   <button
                     onClick={handleAgregarMesaClick}
-                    className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-3xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors"
+                    className="py-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <Plus className="h-3 w-3" />
-                    Agregar Mesa
+                    <Plus className="h-2.5 w-2.5" />
+                    Nueva Mesa
                   </button>
                 )}
               </div>
-            </div>
 
-            {/* Controles de Búsqueda y Pestañas Rápidas */}
-            <div className="flex flex-col md:flex-row gap-3 bg-white p-3 border border-slate-200 rounded-xl shadow-2xs">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar mesa rápidamente (ej: Barra 2, Mesa 5...)"
-                  value={mesaSearch}
-                  onChange={(e) => setMesaSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white focus:border-slate-400 placeholder:text-slate-400 transition-colors"
-                />
-                {mesaSearch && (
-                  <button
-                    onClick={() => setMesaSearch('')}
-                    className="absolute right-3 top-2.5 text-2xs font-extrabold text-slate-400 hover:text-slate-600"
-                  >
-                    Limpiar
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
-                {(['Todas', 'Salón', 'Barra', 'Terraza', 'Otras'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setMesaFilterTab(tab)}
-                    className={`px-3 py-1.5 rounded-md text-2xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-                      mesaFilterTab === tab
-                        ? 'bg-white text-slate-800 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar mesa rápidamente..."
+                    value={mesaSearch}
+                    onChange={(e) => setMesaSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:bg-white focus:border-slate-400 placeholder:text-slate-400 transition-colors"
+                  />
+                  {mesaSearch && (
+                    <button
+                      onClick={() => setMesaSearch('')}
+                      className="absolute right-3 top-2 text-2xs font-extrabold text-slate-400 hover:text-slate-600"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200">
+                  {(['Todas', 'Salón', 'Barra', 'Terraza', 'Otras'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setMesaFilterTab(tab)}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        mesaFilterTab === tab
+                          ? 'bg-white text-slate-800 shadow-3xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
