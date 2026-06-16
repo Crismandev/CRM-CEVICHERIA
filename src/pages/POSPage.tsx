@@ -9,7 +9,7 @@ import type { Producto, Orden, Mesa } from '../types/database';
 import { ProductGrid } from '../components/pos/ProductGrid';
 import { TicketSidebar } from '../components/pos/TicketSidebar';
 import { PrintReceipt } from '../components/pos/PrintReceipt';
-import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, Shield, User, Coffee, Plus, Trash2, X, Search, CheckCircle, XCircle } from 'lucide-react';
+import { TrendingUp, ShoppingBag, AlertTriangle, ArrowLeft, User, Plus, Trash2, X, Search, CheckCircle } from 'lucide-react';
 
 export const POSPage: React.FC = () => {
   const { user, isAdmin } = useAuth();

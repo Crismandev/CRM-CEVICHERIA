@@ -164,7 +164,9 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
             Agregar Plato / Bebida
           </button>
         )}
-         {/* Vista de tarjetas para pantallas móviles */}
+      </div>
+
+      {/* Vista de tarjetas para pantallas móviles */}
       <div className="md:hidden grid grid-cols-1 gap-4">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-lg font-bold">
