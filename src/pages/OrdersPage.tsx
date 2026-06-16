@@ -157,7 +157,7 @@ export const OrdersPage: React.FC = () => {
   }, [filteredOrdenes]);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col overflow-y-auto lg:overflow-hidden">
       
       {/* 1. KPIs Superiores */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-shrink-0">
@@ -240,11 +240,11 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* 3. Panel de Tabla y Detalle Lateral */}
-      <div className="flex-1 flex gap-6 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:overflow-hidden relative min-h-[400px]">
         {/* Tabla a la izquierda */}
-        <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full">
-          <div className="overflow-y-auto flex-1">
-            <table className="w-full text-left border-collapse">
+        <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full shadow-2xs">
+          <div className="overflow-x-auto overflow-y-auto flex-1">
+            <table className="w-full text-left border-collapse min-w-[750px] lg:min-w-0">
               <thead className="bg-slate-50 text-slate-500 text-2xs font-bold uppercase tracking-widest border-b border-slate-200 sticky top-0 z-10">
                 <tr>
                   <th className="p-4">Código / ID</th>
@@ -319,8 +319,19 @@ export const OrdersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Panel lateral derecho (Detalle) */}
-        <div className="w-96 bg-white border border-slate-200 rounded-lg flex flex-col h-full overflow-hidden flex-shrink-0">
+        {/* Panel lateral derecho (Detalle) - Drawer flotante en móviles */}
+        {selectedOrden && (
+          <div 
+            className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs z-30 lg:hidden transition-opacity duration-200"
+            onClick={() => setSelectedOrden(null)}
+          />
+        )}
+
+        <div className={`
+          fixed lg:relative inset-y-0 right-0 z-45 w-full sm:w-96 lg:w-96 bg-white border-l lg:border border-slate-200 lg:rounded-lg flex flex-col h-full overflow-hidden flex-shrink-0
+          transform transition-transform duration-250 ease-in-out lg:transform-none
+          ${selectedOrden ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        `}>
           {selectedOrden ? (
             <div className="flex flex-col h-full">
               {/* Header */}

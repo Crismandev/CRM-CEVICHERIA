@@ -117,7 +117,7 @@ export const UsersPage: React.FC = () => {
     <div className="p-6 space-y-6 max-w-5xl mx-auto h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
       
       {/* Cabecera */}
-      <div className="flex justify-between items-center border-b border-slate-200 pb-3 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 flex-shrink-0 gap-3">
         <div>
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Gestión del Personal</h3>
           <p className="text-2xs text-slate-500 font-bold uppercase mt-1">Registra personal, cambia privilegios y gestiona accesos al sistema</p>
@@ -125,7 +125,7 @@ export const UsersPage: React.FC = () => {
         
         <button
           onClick={() => setShowAddModal(true)}
-          className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-colors"
+          className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-colors w-full sm:w-auto justify-center"
         >
           <UserPlus className="h-4 w-4" />
           Registrar Colaborador
@@ -134,8 +134,8 @@ export const UsersPage: React.FC = () => {
 
       {/* Grid Principal */}
       <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-2xs">
-        <div className="overflow-y-auto flex-1">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto overflow-y-auto flex-1">
+          <table className="w-full text-left border-collapse min-w-[650px] lg:min-w-0">
             <thead className="bg-slate-50 text-slate-500 text-2xs font-bold uppercase tracking-widest border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="p-4">Colaborador</th>

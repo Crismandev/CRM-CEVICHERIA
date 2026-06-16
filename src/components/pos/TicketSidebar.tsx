@@ -4,14 +4,15 @@ import { useAuth } from '../../hooks/useAuth';
 import type { TipoComprobante, Orden } from '../../types/database';
 import { db } from '../../services/db';
 import { useToast } from '../../hooks/useToast';
-import { Trash2, Plus, Minus, CreditCard, Receipt, User } from 'lucide-react';
+import { Trash2, Plus, Minus, CreditCard, Receipt, User, ArrowLeft } from 'lucide-react';
 
 interface TicketSidebarProps {
   onCheckoutSuccess: () => void;
   setPrintData: (data: { orden: Orden; items: any[] } | null) => void;
+  onCloseMobile?: () => void;
 }
 
-export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess, setPrintData }) => {
+export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess, setPrintData, onCloseMobile }) => {
   const { showToast } = useToast();
   const { user } = useAuth();
   const { cart, decrementQuantity, addToCart, total, clearCart, activeTable } = useCart();
@@ -89,11 +90,20 @@ export const TicketSidebar: React.FC<TicketSidebarProps> = ({ onCheckoutSuccess,
   };
 
   return (
-    <div className="w-96 bg-white border-l border-slate-200 flex flex-col h-full overflow-hidden shadow-sm">
+    <div className="w-full h-full bg-white flex flex-col overflow-hidden shadow-sm">
       
       {/* Header */}
       <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="lg:hidden p-1 mr-1 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+              title="Volver a los platos"
+            >
+              <ArrowLeft className="h-4.5 w-4.5" />
+            </button>
+          )}
           <Receipt className="h-5 w-5 text-slate-700" />
           <h3 className="font-bold text-slate-800 tracking-tight text-sm uppercase">Detalle del Pedido</h3>
         </div>

@@ -144,7 +144,7 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-md text-sm focus:outline-none"
+            className="w-full md:w-auto px-3 py-2 bg-white border border-slate-200 rounded-md text-sm focus:outline-none cursor-pointer"
           >
             {categorias.map((cat) => (
               <option key={cat} value={cat}>
@@ -164,22 +164,111 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
             Agregar Plato / Bebida
           </button>
         )}
+         {/* Vista de tarjetas para pantallas móviles */}
+      <div className="md:hidden grid grid-cols-1 gap-4">
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-lg font-bold">
+            No se encontraron productos registrados.
+          </div>
+        ) : (
+          filtered.map((p) => {
+            const stockEditVal = quickStock[p.id] !== undefined ? quickStock[p.id] : p.stock_disponible;
+            const isDirty = quickStock[p.id] !== undefined;
+
+            return (
+              <div key={p.id} className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm leading-tight">{p.nombre}</h4>
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-3xs font-black uppercase tracking-wider mt-1">
+                      {p.categoria}
+                    </span>
+                  </div>
+                  <span className="font-mono font-bold text-slate-800 text-xs bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                    S/ {p.precio.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xs font-extrabold text-slate-400 uppercase tracking-widest">Stock:</span>
+                    {role === 'admin' ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={stockEditVal}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setQuickStock((prev) => ({
+                              ...prev,
+                              [p.id]: isNaN(val) ? 0 : val,
+                            }));
+                          }}
+                          className="w-16 px-1.5 py-0.5 border border-slate-200 rounded text-center text-xs focus:outline-none focus:border-slate-400 font-mono"
+                        />
+                        {isDirty && (
+                          <button
+                            onClick={() => handleQuickStockSave(p.id)}
+                            className="p-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors cursor-pointer"
+                            title="Guardar stock"
+                          >
+                            <Save className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={`font-bold font-mono px-2 py-0.5 rounded text-3xs ${
+                        p.stock_disponible <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {p.stock_disponible} unds
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {p.activo ? (
+                      <span className="flex items-center gap-1 text-emerald-600 font-bold text-3xs uppercase tracking-wider">
+                        <CheckCircle className="h-3.5 w-3.5" /> Activo
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-red-500 font-bold text-3xs uppercase tracking-wider">
+                        <XCircle className="h-3.5 w-3.5" /> Inactivo
+                      </span>
+                    )}
+
+                    {role === 'admin' && (
+                      <button
+                        onClick={() => handleEditClick(p)}
+                        className="p-1 bg-slate-50 text-slate-500 hover:text-slate-800 border border-slate-100 rounded transition-colors cursor-pointer ml-1"
+                        title="Editar plato completo"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      {/* Tabla de Gestión */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-            <tr>
-              <th className="p-4">Plato / Bebida</th>
-              <th className="p-4">Categoría</th>
-              <th className="p-4">Precio</th>
-              <th className="p-4">Stock Disponible</th>
-              <th className="p-4">Estado</th>
-              {role === 'admin' && <th className="p-4 text-right">Acciones</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+      {/* Tabla de Gestión (Hidden on mobile) */}
+      <div className="hidden md:flex bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex-col">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[700px] lg:min-w-0">
+            <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th className="p-4">Plato / Bebida</th>
+                <th className="p-4">Categoría</th>
+                <th className="p-4">Precio</th>
+                <th className="p-4">Stock Disponible</th>
+                <th className="p-4">Estado</th>
+                {role === 'admin' && <th className="p-4 text-right">Acciones</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-slate-400">
@@ -271,8 +360,9 @@ export const StockTable: React.FC<StockTableProps> = ({ productos, onRefresh }) 
                 );
               })
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal para Crear/Editar Producto */}

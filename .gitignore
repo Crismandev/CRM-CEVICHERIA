@@ -33,3 +33,4 @@ dist-ssr
 cevicheria.code-workspace
 context.md
 master/
+.vercel
